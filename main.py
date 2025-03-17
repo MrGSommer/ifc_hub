@@ -25,7 +25,7 @@ tabs = st.tabs([
     "IFC Element Remover",
     "Mengenauswertung",
     "Raumauswertung (IfcSpace)",
-    "Psets & QTO"
+    "Psets & QTO (low Files)"
 ])
 
 with tabs[0]:
