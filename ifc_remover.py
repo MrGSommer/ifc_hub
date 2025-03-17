@@ -33,7 +33,7 @@ def app(ifc_files):
 
     # Auswahl der hochgeladenen Datei
     file_options = {file.name: file for file in ifc_files}
-    selected_file_name = st.selectbox("Wählen Sie eine IFC-Datei", list(file_options.keys()))
+    selected_file_name = st.selectbox("Wählen Sie eine IFC-Datei", list(file_options.keys()), key="ifc_remover_selectbox")
     selected_file = file_options[selected_file_name]
 
     ids_input = st.text_input("GlobalIds (getrennt mit Komma)", placeholder="z.B. 3K5hj2,1Q8dF7,...")
