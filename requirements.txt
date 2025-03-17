@@ -1,3 +1,4 @@
 streamlit
 ifcopenshell
-streamlit_3d_model
+pandas
+openpyxl
