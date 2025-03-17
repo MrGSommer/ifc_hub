@@ -11,10 +11,7 @@ st.markdown("Wählen Sie einen Tab für verschiedene IFC-Operationen.")
 uploaded_ifc_files = st.sidebar.file_uploader(
     "Laden Sie IFC-Dateien hoch", type=["ifc"], accept_multiple_files=True
 )
-st.sidebar.markdown("### Hochgeladene Dateien")
-if uploaded_ifc_files:
-    for file in uploaded_ifc_files:
-        st.sidebar.write(file.name)
+
 else:
     st.sidebar.info("Keine IFC-Dateien hochgeladen.")
 
