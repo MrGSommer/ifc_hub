@@ -2,15 +2,19 @@ import streamlit as st
 import ifcopenshell
 import ifcopenshell.geom
 import ifcopenshell.util.shape as ifc_shape
+import ifcopenshell.util.element as IfcElement
 import pandas as pd
 import tempfile
+import io
 
 def calculate_quantities(ifc_file):
     """
     Berechnet Mengen (Volumen, Fläche, Abmessungen) für alle IfcBuildingElemente.
+    Dabei werden exakte Funktionen zur Flächen- und Volumenberechnung verwendet,
+    und die Bounding Box wird aus den extrahierten Vertices ermittelt.
     """
     settings = ifcopenshell.geom.settings()
-    # Wir nutzen IfcBuildingElement als Filter; je nach Modell kann ggf. eine Erweiterung sinnvoll sein.
+    # Filter: Wir betrachten hier IfcBuildingElemente (anpassbar)
     elements = ifc_file.by_type("IfcBuildingElement")
     data = []
 
@@ -23,20 +27,22 @@ def calculate_quantities(ifc_file):
             # Mengenauswertung mithilfe der ifc_shape-Funktionen
             volume = ifc_shape.get_volume(geometry)
             area = ifc_shape.get_area(geometry)
-            bbox = ifc_shape.get_bbox(geometry)  # Liefert (min_xyz, max_xyz)
-            length = bbox[1][0] - bbox[0][0]
-            width  = bbox[1][1] - bbox[0][1]
-            height = bbox[1][2] - bbox[0][2]
+            # Erst Vertices extrahieren, dann Bounding Box berechnen
+            vertices = ifc_shape.get_vertices(geometry)
+            bbox_min, bbox_max = ifc_shape.get_bbox(vertices)
+            length = bbox_max[0] - bbox_min[0]
+            width  = bbox_max[1] - bbox_min[1]
+            height = bbox_max[2] - bbox_min[2]
 
-            # PropertySets auslesen (hier beispielhaft eBKP-H und typische Booleans)
-            psets = ifcopenshell.util.element.get_psets(element)
+            # PropertySets auslesen
+            psets = IfcElement.get_psets(element)
             ebkp = psets.get("eBKP-H", "(n/a)")
             is_external = psets.get("IsExternal", False)
             load_bearing = psets.get("LoadBearing", False)
 
-            # Ermitteln des Geschosses und Gebäudes über Containerbeziehungen
-            storey = ifcopenshell.util.element.get_container(element, "IfcBuildingStorey")
-            building = ifcopenshell.util.element.get_container(element, "IfcBuilding")
+            # Geschoss und Gebäude ermitteln (Container-Beziehungen)
+            storey = IfcElement.get_container(element, "IfcBuildingStorey")
+            building = IfcElement.get_container(element, "IfcBuilding")
 
             data.append({
                 "GUID": element.GlobalId,
@@ -79,10 +85,12 @@ def app(uploaded_files):
         ifc_file = ifcopenshell.open(ifc_path)
         df = calculate_quantities(ifc_file)
         st.dataframe(df, use_container_width=True)
-        towrite = df.to_excel(index=False)
+        buffer = io.BytesIO()
+        df.to_excel(buffer, index=False, engine="openpyxl")
+        buffer.seek(0)
         st.download_button(
             label="Mengenauswertung herunterladen (Excel)",
-            data=towrite,
+            data=buffer,
             file_name="mengenauswertung.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
