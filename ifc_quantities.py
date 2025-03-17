@@ -45,7 +45,7 @@ def app(uploaded_files):
                 "Tragend": IfcElement.get_psets(element).get("LoadBearing", False),
                 "Geschoss": IfcElement.get_container(element, "IfcBuildingStorey"),
                 "Gebäude": IfcElement.get_psets(element).get("Building", "(n/a)"),
-            }
+            })
 
         df = pd.DataFrame(elements_data)
         tools.display_dataframe_to_user(name="IFC Mengenauswertung", dataframe=df)
