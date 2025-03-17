@@ -19,7 +19,7 @@ if uploaded_ifc_files := uploaded_ifc_files:
 else:
     st.sidebar.info("Bitte IFC-Dateien hochladen.")
 
-tabs = st.tabs(["Übersicht", "IFC Element Remover", "Mengenauswertung", "Raumauswertung (IfcSpace)"])
+tabs = st.tabs(["Übersicht", "IFC Element Remover", "Mengenauswertung", "Raumauswertung"])
 
 
 with tabs[0]:
