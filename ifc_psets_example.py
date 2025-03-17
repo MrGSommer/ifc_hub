@@ -39,13 +39,13 @@ def calculate_reference_quantities(ifc_file):
                 ref = base_qto.get("NetVolume", None)
             
             row = {
-                "GUID": element.GlobalId,
                 "IFC_Type": element.is_a(),
                 "Reference_Quantity": ref,
                 "NetVolume": base_qto.get("NetVolume", None),
                 "NominalLength": base_qto.get("NominalLength", None),
                 "NominalWidth": base_qto.get("NominalWidth", None),
-                "NominalHeight": base_qto.get("NominalHeight", None)
+                "NominalHeight": base_qto.get("NominalHeight", None),
+                "GUID": element.GlobalId
             }
             rows.append(row)
         except Exception as e:
