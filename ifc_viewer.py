@@ -45,7 +45,7 @@ def app():
                     infoDiv.style.border = '1px solid #555';
                     document.body.appendChild(infoDiv);
                 }}
-                infoDiv.innerHTML = `<b>Ausgewählte GlobalId:</b> ${globalId}`;
+                infoDiv.innerHTML = `<b>Ausgewählte GlobalId:</b> ${{{{globalId}}}}`;
             }}
         }});
 
