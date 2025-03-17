@@ -5,32 +5,36 @@ import ifcopenshell.util.element as IfcElement
 import ifcopenshell.util.shape as ifc_shape
 import pandas as pd
 import tempfile
+import io
 
 def calculate_spaces(ifc_file):
     """
-    Liest IfcSpace-Elemente aus, ermittelt Raumname, Raumkategorie (SIA416),
-    Bodenfläche und Wandfläche (approximiert) sowie Geschoss und Gebäude.
+    Liest IfcSpace-Elemente aus und ermittelt:
+      - Raumname (LongName oder Name)
+      - Raumkategorie (SIA416, falls vorhanden)
+      - Bodenfläche (über get_area auf der Geometrie)
+      - Approximierte Wandfläche (Perimeter * durchschnittliche Raumhöhe)
+      - Geschoss und Gebäude (über Container-Beziehungen)
     """
     spaces = ifc_file.by_type("IfcSpace")
     data = []
 
     for space in spaces:
         try:
-            # Raumname (LongName bevorzugt, ansonsten Name)
             name = space.LongName or space.Name or "(n/a)"
-            # Raumkategorie aus PropertySet "SIA416"
             psets = IfcElement.get_psets(space)
             room_category = psets.get("SIA416", "(n/a)")
 
-            # Versuche, Geometrie zu erzeugen – nicht alle IfcSpace haben eine direkte Darstellung.
             try:
                 settings = ifcopenshell.geom.settings()
                 shape = ifcopenshell.geom.create_shape(settings, space)
                 geometry = shape.geometry
                 floor_area = ifc_shape.get_area(geometry)
-                bbox = ifc_shape.get_bbox(geometry)
-                perimeter = 2 * ((bbox[1][0] - bbox[0][0]) + (bbox[1][1] - bbox[0][1]))
-                avg_height = bbox[1][2] - bbox[0][2]
+                vertices = ifc_shape.get_vertices(geometry)
+                bbox_min, bbox_max = ifc_shape.get_bbox(vertices)
+                # Annahme: rechteckige Projektion, Perimeter berechnet aus X- und Y-Differenz
+                perimeter = 2 * ((bbox_max[0] - bbox_min[0]) + (bbox_max[1] - bbox_min[1]))
+                avg_height = bbox_max[2] - bbox_min[2]
                 wall_area = perimeter * avg_height
             except Exception as e:
                 floor_area = 0
@@ -53,7 +57,7 @@ def calculate_spaces(ifc_file):
     return pd.DataFrame(data)
 
 def app(uploaded_files):
-    st.header("Raumauswertung 📐")
+    st.header("IfcSpace Raumauswertung 📐")
     if not uploaded_files:
         st.warning("Bitte IFC-Datei(en) in der Sidebar hochladen.")
         return
@@ -73,10 +77,12 @@ def app(uploaded_files):
         ifc_file = ifcopenshell.open(ifc_path)
         df_spaces = calculate_spaces(ifc_file)
         st.dataframe(df_spaces, use_container_width=True)
-        towrite = df_spaces.to_excel(index=False)
+        buffer = io.BytesIO()
+        df_spaces.to_excel(buffer, index=False, engine="openpyxl")
+        buffer.seek(0)
         st.download_button(
             label="Raumauswertung herunterladen (Excel)",
-            data=towrite,
+            data=buffer,
             file_name="raumauswertung.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
