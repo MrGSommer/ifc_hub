@@ -28,16 +28,17 @@ def app(uploaded_files):
         return
     wall = walls[0]
 
-    # Ermittlung des Wall-Typs
-    wall_type = IfcElement.get_type(wall)
-
-    st.subheader("Psets für Wall Type")
-    psets_type = IfcElement.get_psets(wall_type)
-    st.json(psets_type)
-
     st.subheader("Psets für Wall Instanz")
     psets_wall = IfcElement.get_psets(wall)
     st.json(psets_wall)
+
+    wall_type = IfcElement.get_type(wall)
+    if wall_type:
+        st.subheader("Psets für Wall Type")
+        psets_type = IfcElement.get_psets(wall_type)
+        st.json(psets_type)
+    else:
+        st.info("Kein Wall-Typ gefunden.")
 
     st.subheader("Nur Properties (psets_only=True)")
     psets_only = IfcElement.get_psets(wall, psets_only=True)
